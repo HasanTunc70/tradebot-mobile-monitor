@@ -61,7 +61,7 @@
     .mode-pill.conflict { color: var(--amber); border-color: rgba(247,198,106,.4); background: rgba(247,198,106,.1); }
     .mode-pill.unknown { color: #bdc9d8; border-color: var(--line); background: rgba(255,255,255,.045); }
     .mode-help { color: #a8b6c9; font-size: 12px; line-height: 1.5; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+    .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
     .stat { min-width: 0; border: 1px solid var(--line); border-radius: 15px; padding: 17px 18px; background: rgba(16, 27, 43, .82); }
     .stat-label { color: var(--muted); font-size: 12px; }
     .stat-value { overflow: hidden; margin-top: 9px; font-size: clamp(19px, 2.4vw, 25px); font-weight: 750; letter-spacing: -.035em; text-overflow: ellipsis; white-space: nowrap; }
@@ -112,6 +112,9 @@
     .trade-pnl { font-weight: 750; }
     .footnote { display: flex; justify-content: space-between; gap: 14px; margin: 18px 2px 0; color: #74869e; font-size: 10px; line-height: 1.5; }
     .footnote strong { color: #a2b0c3; font-weight: 600; }
+    @media (max-width: 1050px) and (min-width: 821px) {
+      .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     @media (max-width: 820px) {
       .shell { padding: 17px 15px 32px; }
       .hero { grid-template-columns: 1fr; gap: 11px; }
@@ -186,6 +189,7 @@
         <div class="stat"><div class="stat-label">Günlük kapalı PnL</div><div id="dailyPnl" class="stat-value">—</div><div class="stat-sub">İstanbul saatine göre bugün</div></div>
         <div class="stat"><div class="stat-label">Toplam kapalı PnL</div><div id="totalPnl" class="stat-value">—</div><div class="stat-sub">Açık pozisyon PnL'i dahil değildir</div></div>
         <div class="stat"><div class="stat-label">Açık pozisyon</div><div id="openCount" class="stat-value">—</div><div class="stat-sub" id="accountSub">Hesaplar yükleniyor</div></div>
+        <div class="stat"><div class="stat-label">Toplam açık PnL</div><div id="openPnl" class="stat-value">—</div><div class="stat-sub" id="openPnlSub">Açık pozisyonların PnL toplamı · USDT</div></div>
       </section>
 
       <section class="panel">
@@ -287,6 +291,9 @@
       const daily = accounts.reduce((sum, a) => sum + (num(a.metrics?.daily_pnl) ?? 0), 0);
       const total = accounts.reduce((sum, a) => sum + (num(a.metrics?.total_pnl) ?? 0), 0);
       const positions = accounts.flatMap((a) => Array.isArray(a.positions) ? a.positions : []);
+      const openPnls = positions.map((position) => num(position.live_pnl_net_estimate) ?? num(position.live_pnl));
+      const openPnlAvailable = openPnls.every((value) => value !== null);
+      const totalOpenPnl = openPnls.reduce((sum, value) => sum + (value ?? 0), 0);
       const online = accounts.filter((a) => !isStale(a)).length;
       byId("totalBalance").textContent = hasBalance ? moneyText(totalBalance) : "—";
       byId("dailyPnl").textContent = signedMoney(daily);
@@ -294,6 +301,11 @@
       byId("totalPnl").textContent = signedMoney(total);
       byId("totalPnl").className = `stat-value ${pnlClass(total)}`;
       byId("openCount").textContent = String(positions.length);
+      byId("openPnl").textContent = openPnlAvailable ? signedMoney(totalOpenPnl) : "—";
+      byId("openPnl").className = `stat-value ${openPnlAvailable ? pnlClass(totalOpenPnl) : "neutral"}`;
+      byId("openPnlSub").textContent = positions.length
+        ? (openPnlAvailable ? `${positions.length} açık pozisyon kartındaki PnL toplamı` : "Pozisyon PnL verisi bekleniyor")
+        : "Açık pozisyon yok · USDT";
       byId("accountSub").textContent = `${online}/${accounts.length} hesap çevrimiçi`;
       byId("balanceSub").textContent = accounts.length > 1 ? `${accounts.length} hesabın toplamı · USDT` : "USDT";
       byId("accountTag").textContent = `${accounts.length} HESAP`;
@@ -401,5 +413,5 @@
       byId("modeHelp").textContent = "Bağlantı veya Firestore Rules ayarını kontrol edin.";
     });
   </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a50ace523a31b62f',t:'MTc5MzAzMTgxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
